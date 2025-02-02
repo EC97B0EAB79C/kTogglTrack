@@ -5,17 +5,19 @@ import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents3
-// import "../code/toggl-api.js" as TogglAPI
+ import "../code/toggl-api.js" as TogglAPI
 
 PlasmoidItem {
     id: root
 
-    property var currentTimeEntry: ({
+    property var currentTimeEntry: {
         "description": "No active task",
-        "project": "",
+        "workspace_id": -1,
+        "project_id": -1,
+        "project_name": "";
         "color": "#000000",
-        "duration": 0
-    })
+        "duration": -1
+    }
 
     function printDebug(msg) {
         if (plasmoid.configuration.logConsole) {
@@ -32,23 +34,13 @@ PlasmoidItem {
 
     function updateCurrentTimeEntry() {
         printDebug("Getting current time entry");
-//        TogglAPI.getCurrentTimeEntry()
-//            .then(entry => {
-//                if (entry) {
-//                    currentTimeEntry = entry;
-//                } else {
-//                    currentTimeEntry = {
-//                        description: "No active task",
-//                        project: "",
-//                        color: "#000000",
-//                        duration: 0
-//                    };
-//                }
-//            })
-//            .catch(error => {
-//                console.error("Error fetching time entry:", error);
-//                currentTimeEntry.description = "Error fetching data";
-//            });
+        TogglAPI.getCurrentTimeEntry(function(entry) {
+            if (entry) {
+                currentTimeEntry = entry
+            } else {
+                
+            }
+        });
     }
 
     Timer {
@@ -65,19 +57,19 @@ PlasmoidItem {
             width: 10
             height: 10
             radius: 5
-            color: currentTimeEntry.color
-            visible: currentTimeEntry.project !== ""
+            color: currentTimeEntry["color"]
+            visible: currentTimeEntry["project"] !== ""
         }
 
         PlasmaComponents3.Label {
-            text: currentTimeEntry.description
+            text: currentTimeEntry["description"]
             elide: Text.ElideRight
             Layout.maximumWidth: 150
         }
 
         PlasmaComponents3.Label {
-            text: formatDuration(currentTimeEntry.duration)
-            visible: currentTimeEntry.duration > 0
+            text: formatDuration(currentTimeEntry["duration"])
+            visible: currentTimeEntry["duration"] > 0
         }
     }
 
@@ -90,27 +82,27 @@ PlasmoidItem {
                 width: 12
                 height: 12
                 radius: 6
-                color: currentTimeEntry.color
-                visible: currentTimeEntry.project !== ""
+                color: currentTimeEntry["color"]
+                visible: currentTimeEntry["project"] !== ""
             }
 
             PlasmaComponents3.Label {
-                text: currentTimeEntry.description
+                text: currentTimeEntry["description"]
                 font.bold: true
                 font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
             }
         }
 
         PlasmaComponents3.Label {
-            text: currentTimeEntry.project
-            visible: currentTimeEntry.project !== ""
+            text: currentTimeEntry["project"]
+            visible: currentTimeEntry["project"] !== ""
             color: PlasmaCore.Theme.disabledTextColor
         }
 
         PlasmaComponents3.Label {
-            text: formatDuration(currentTimeEntry.duration)
+            text: formatDuration(currentTimeEntry["duration"])
             font.family: "monospace"
-            visible: currentTimeEntry.duration > 0
+            visible: currentTimeEntry["duration"] > 0
         }
     }
 }

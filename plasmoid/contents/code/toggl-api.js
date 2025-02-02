@@ -1,73 +1,73 @@
-const apiKey = process.env.TOGGL_API_KEY;
-const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`); 
+function getCurrentTimeEntry(callback) {
+    const apiKey = "api_token";
+    const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
+    
+    var req = new XMLHttpRequest();
+    var url = "https://api.track.toggl.com/api/v9/me/time_entries/current";
 
-async function getCurrentTimeEntry() {
-    try {
-        const response = await fetch("https://api.track.toggl.com/api/v9/me/time_entries/current", {
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": auth 
+    req.open("GET", url, true);
+    
+    req.setRequestHeader("Content-Type", "application/json");
+    req.setRequestHeader("Authorization", auth);
+
+    req.onreadystatechange = function() {
+        if (req.readyState === XMLHttpRequest.DONE) {
+            try {
+                if (req.status === 200) {
+                    var entry = JSON.parse(req.responseText);
+                    var currentTimeEntry = {
+                        description: entry.description,
+                        project: "",
+                        color: "#000000",
+                        duration: Math.floor((Date.now() - new Date(entry.start).getTime()) / 1000)
+                    };
+                    callback(currentTimeEntry);
+                } else {
+                    console.error("[HTTP Error]", req.status, req.statusText);
+                    callback(null);
+                }
+            } catch(e) {
+                console.error("[Parsing Error]", e.message);
+                callback(null);
             }
-        });
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const entry = await response.json();
-        if (!entry) return null;
+        }
+    };
 
-        const project = await getProject(entry.workspace_id, entry.project_id);
-        
-        return {
-            description: entry.description,
-            project: project?.name || "No project",
-            color: project?.color || "#000000",
-            duration: Math.floor((Date.now() - new Date(entry.start).getTime()) / 1000)
-        };
-    } catch (err) {
-        console.error('Error in getCurrentTimeEntry:', err.message);
-        throw err;
-    }
+    req.onerror = function() {
+        console.error("[Network Error] Request failed");
+        callback(null);
+    };
+
+    req.send();
 }
 
-async function getProject(workspaceId, projectId) {
-    try {
-        const response = await fetch(`https://api.track.toggl.com/api/v9/workspaces/${workspaceId}/projects/${projectId}`, {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": auth
+
+function getProject(workspaceId, projectId, callback = function() {}) {
+    const apiKey = "api_token";
+    const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
+    
+    var req = new XMLHttpRequest();
+    var url = `https://api.track.toggl.com/api/v9/workspaces/${workspaceId}/projects/${projectId}`;
+
+    req.open("GET", url);
+    
+    req.setRequestHeader("Content-Type", "application/json");
+    req.setRequestHeader("Authorization", auth);
+
+    req.onerror = function() {
+        console.error("Request couldn't be sent: " + req.statusText);
+    };
+
+    req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+            if (req.status == 200) {
+                var project = JSON.parse(req.responseText);
+                callback(project);
+            } else {
+                console.error("[getProject] Request failed: " + req.status);
             }
-        });
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return await response.json();
-    } catch (err) {
-        console.error('Error in getProject:', err.message);
-        return null;
-    }
+        }
+    };
+
+    req.send();
 }
-
-// Proper usage
-// (async () => {
-//     try {
-//         const timeEntry = await getCurrentTimeEntry();
-//         console.log("Current Time Entry:", timeEntry);
-//     } catch (err) {
-//         console.error("Failed to fetch time entry:", err.message);
-//     }
-// })();
-
-
-// const entry = await getCurrentTimeEntry();
-// console.log('Fetched entry:', entry);
-
-// const project = await getProject(entry.workspace_id, entry.project_id);
-
-// console.log('Project:', project.name, project.color);
-// console.log('Description:', entry.description);
-// console.log('Start:', entry.start);
-// const duration = Math.floor((Date.now() - new Date(entry.start).getTime()) / 1000);
-// const hours = Math.floor(duration / 3600);
-// const minutes = Math.floor((duration % 3600) / 60);
-// const seconds = duration % 60;
-// console.log(`Duration: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-
