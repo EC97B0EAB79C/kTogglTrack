@@ -12,10 +12,9 @@ PlasmoidItem {
 
     property var currentTimeEntry: {
         "description": "No active task",
-        "workspace_id": -1,
-        "project_id": -1,
-        "project_name": "";
+        "project_name": "",
         "color": "#000000",
+        "start": -1,
         "duration": -1
     }
 
@@ -43,28 +42,57 @@ PlasmoidItem {
         });
     }
 
+    function updateDuration() {
+        printDebug("Updating duration");
+        if (currentTimeEntry["start"] > 0) {
+            currentTimeEntry["duration"] = Math.floor((new Date() - currentTimeEntry["start"]) / 1000);
+        } else {
+            currentTimeEntry["duration"] = -1;
+        }
+        currentTimeEntry = currentTimeEntry;
+    }
+
+    Component.onCompleted: {
+        updateCurrentTimeEntry();
+    }
+
     Timer {
-        interval: 1000
+        interval: 10*1000
         running: true
         repeat: true
         onTriggered: updateCurrentTimeEntry()
     }
 
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        onTriggered: updateDuration()
+    }
+
     compactRepresentation: RowLayout {
         spacing: 5
-
-        Rectangle {
-            width: 10
-            height: 10
-            radius: 5
-            color: currentTimeEntry["color"]
-            visible: currentTimeEntry["project"] !== ""
-        }
 
         PlasmaComponents3.Label {
             text: currentTimeEntry["description"]
             elide: Text.ElideRight
             Layout.maximumWidth: 150
+        }
+
+        RowLayout {
+            Rectangle {
+                width: 10
+                height: 10
+                radius: 5
+                color: currentTimeEntry["color"]
+            }
+
+            PlasmaComponents3.Label {
+                text: currentTimeEntry["project_name"]
+                color: currentTimeEntry["color"]
+            }
+
+            visible: currentTimeEntry["project"] !== ""
         }
 
         PlasmaComponents3.Label {
@@ -83,20 +111,20 @@ PlasmoidItem {
                 height: 12
                 radius: 6
                 color: currentTimeEntry["color"]
-                visible: currentTimeEntry["project"] !== ""
             }
 
             PlasmaComponents3.Label {
-                text: currentTimeEntry["description"]
-                font.bold: true
-                font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
+                text: currentTimeEntry["project_name"]
+                color: currentTimeEntry["color"]
             }
-        }
 
+            visible: currentTimeEntry["project_name"] !== ""
+        }
+        
         PlasmaComponents3.Label {
-            text: currentTimeEntry["project"]
-            visible: currentTimeEntry["project"] !== ""
-            color: PlasmaCore.Theme.disabledTextColor
+            text: currentTimeEntry["description"]
+            font.bold: true
+            font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
         }
 
         PlasmaComponents3.Label {

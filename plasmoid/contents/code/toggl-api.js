@@ -1,5 +1,5 @@
 function getCurrentTimeEntry(callback) {
-    const apiKey = "api_token";
+    const apiKey = "api_key";
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
     
     var req = new XMLHttpRequest();
@@ -15,13 +15,25 @@ function getCurrentTimeEntry(callback) {
             try {
                 if (req.status === 200) {
                     var entry = JSON.parse(req.responseText);
-                    var currentTimeEntry = {
-                        description: entry.description,
-                        project: "",
-                        color: "#000000",
-                        duration: Math.floor((Date.now() - new Date(entry.start).getTime()) / 1000)
-                    };
-                    callback(currentTimeEntry);
+
+                    if (!entry || !entry.start) {
+                        callback(null);
+                        return;
+                    }
+
+                    var start = new Date(entry.start).getTime();
+
+                    getProject(entry.workspace_id, entry.project_id, function(project) {
+                        const currentTimeEntry = {
+                            description: entry.description || "No description",
+                            project_name: project?.name || "No project",
+                            color: project?.color || "#000000",
+                            start: start,
+                            duration: Math.floor((Date.now() - start) / 1000)
+                        };
+                        callback(currentTimeEntry);
+                    });
+
                 } else {
                     console.error("[HTTP Error]", req.status, req.statusText);
                     callback(null);
@@ -42,8 +54,8 @@ function getCurrentTimeEntry(callback) {
 }
 
 
-function getProject(workspaceId, projectId, callback = function() {}) {
-    const apiKey = "api_token";
+function getProject(workspaceId, projectId, projectCallback) {
+    const apiKey = "api_key";
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
     
     var req = new XMLHttpRequest();
@@ -59,15 +71,25 @@ function getProject(workspaceId, projectId, callback = function() {}) {
     };
 
     req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            if (req.status == 200) {
-                var project = JSON.parse(req.responseText);
-                callback(project);
-            } else {
-                console.error("[getProject] Request failed: " + req.status);
+        if (req.readyState === XMLHttpRequest.DONE) {
+            try {
+                if (req.status === 200) {
+                    const project = JSON.parse(req.responseText);
+                    projectCallback({
+                        name: project.name,
+                        color: project.color
+                    });
+                } else {
+                    console.error("Project Fetch Error:", req.status);
+                    projectCallback(null);
+                }
+            } catch(e) {
+                console.error("Project Parse Error:", e);
+                projectCallback(null);
             }
         }
     };
+
 
     req.send();
 }
