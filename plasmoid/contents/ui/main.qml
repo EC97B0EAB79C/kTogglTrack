@@ -57,7 +57,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: 10*1000
+        interval: plasmoid.configuration.refreshPeriod * 1000
         running: true
         repeat: true
         onTriggered: updateCurrentTimeEntry()
@@ -92,7 +92,7 @@ PlasmoidItem {
                 color: currentTimeEntry["color"]
             }
 
-            visible: currentTimeEntry["project"] !== ""
+            visible: currentTimeEntry["project_name"] !== ""
         }
 
         PlasmaComponents3.Label {

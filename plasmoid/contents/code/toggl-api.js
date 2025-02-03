@@ -1,5 +1,12 @@
 function getCurrentTimeEntry(callback) {
-    const apiKey = "api_key";
+    const apiKey = plasmoid.configuration.apiTokenToggl;
+
+    if (!apiKey) {
+        console.error("API key is not set");
+        callback(null);
+        return;
+    }
+
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
     
     var req = new XMLHttpRequest();
@@ -55,7 +62,14 @@ function getCurrentTimeEntry(callback) {
 
 
 function getProject(workspaceId, projectId, projectCallback) {
-    const apiKey = "api_key";
+    const apiKey = plasmoid.configuration.apiTokenToggl;
+
+    if (!apiKey) {
+        console.error("API key is not set");
+        projectCallback(null);
+        return;
+    }
+
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
     
     var req = new XMLHttpRequest();
