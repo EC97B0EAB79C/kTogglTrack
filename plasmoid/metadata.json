@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPlugin": {
+        "Id": "com.github.ec97b0eab79c.ktoggltrack",
+        "Name": "kTogglTrack",
+        "Version": "0.4",
+        "Description": "A simple Toggl Track client for KDE Plasma",
+        "Icon": "preferences-system-time",
+        "Category": "Date and Time"
+    },
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-MainScript": "ui/main.qml"
+}
