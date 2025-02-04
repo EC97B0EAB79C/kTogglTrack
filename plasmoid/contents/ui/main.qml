@@ -20,6 +20,8 @@ PlasmoidItem {
         "duration": -1
     }
 
+    property int triggerCount: 0
+
     function printDebug(msg) {
         if (plasmoid.configuration.logConsole) {
             console.log("[debug] [main.qml] " + msg);
@@ -73,17 +75,20 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: plasmoid.configuration.refreshPeriod * 1000
+        interval: 250
         running: true
         repeat: true
-        onTriggered: updateCurrentTimeEntry()
-    }
-
-    Timer {
-        interval: 500
-        running: true
-        repeat: true
-        onTriggered: updateDuration()
+        onTriggered: {
+            
+            if (triggerCount % (plasmoid.configuration.refreshPeriod * 4) === 0) {
+                updateCurrentTimeEntry();
+                triggerCount = 0;
+            }
+            else {
+                updateDuration();
+            }
+            triggerCount++;
+        }
     }
 
     compactRepresentation: RowLayout {
