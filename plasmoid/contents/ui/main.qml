@@ -11,6 +11,8 @@ PlasmoidItem {
     id: root
 
     property var currentTimeEntry: {
+        "time_entry_id": -1,
+        "workspace_id": -1,
         "description": "No active task",
         "project_name": "",
         "color": "#000000",
@@ -52,6 +54,20 @@ PlasmoidItem {
         currentTimeEntry = currentTimeEntry;
     }
 
+    function stopTimeEntry() {
+        printDebug("Stopping time entry");
+        TogglAPI.stopTimeEntry(
+            currentTimeEntry["time_entry_id"],
+            currentTimeEntry["workspace_id"],
+            function(entry) {
+            if (entry) {
+                currentTimeEntry = entry
+            } else {
+                
+            }
+        });
+    }
+
     Component.onCompleted: {
         updateCurrentTimeEntry();
     }
@@ -71,12 +87,19 @@ PlasmoidItem {
     }
 
     compactRepresentation: RowLayout {
+        id: rowLayout
         spacing: 5
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.expanded = !root.expanded
+        }
 
         PlasmaComponents3.Label {
             text: currentTimeEntry["description"]
             elide: Text.ElideRight
             Layout.maximumWidth: 150
+            visible: currentTimeEntry["description"] !== ""
         }
 
         RowLayout {
@@ -100,37 +123,67 @@ PlasmoidItem {
             visible: currentTimeEntry["duration"] > 0
         }
     }
+    
 
     fullRepresentation: ColumnLayout {
         spacing: 10
-        width: 300
+        Layout.maximumHeight: 130
+        Layout.minimumHeight: 130
+        Layout.maximumWidth: 300
+        Layout.minimumWidth: 300
 
         RowLayout {
+            id: rowLayout
+            anchors {
+                top: parent.top
+                horizontalCenter: parent.horizontalCenter
+                topMargin: 10
+            }
+            
+            PlasmaComponents3.Label {
+                text: currentTimeEntry["description"]
+                font.bold: true
+                font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
+                visible: currentTimeEntry["description"] !== ""
+            }
+
             Rectangle {
                 width: 12
                 height: 12
                 radius: 6
                 color: currentTimeEntry["color"]
+                visible: currentTimeEntry["project_name"] !== ""
             }
 
             PlasmaComponents3.Label {
                 text: currentTimeEntry["project_name"]
                 color: currentTimeEntry["color"]
+                visible: currentTimeEntry["project_name"] !== ""
             }
-
-            visible: currentTimeEntry["project_name"] !== ""
         }
         
         PlasmaComponents3.Label {
-            text: currentTimeEntry["description"]
-            font.bold: true
-            font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
-        }
-
-        PlasmaComponents3.Label {
+            id: durationLabel
+            anchors {
+                bottom: stopButton.top
+                bottomMargin: 20
+                horizontalCenter: parent.horizontalCenter
+            }
             text: formatDuration(currentTimeEntry["duration"])
             font.family: "monospace"
             visible: currentTimeEntry["duration"] > 0
+        }
+        
+        PlasmaComponents3.Button {
+            id: stopButton
+            anchors {
+                bottom: parent.bottom
+                bottomMargin: 10
+                horizontalCenter: parent.horizontalCenter
+            }
+            text: "Stop"
+            visible: currentTimeEntry["duration"] > 0
+            onClicked: stopTimeEntry()
         }
     }
 }
