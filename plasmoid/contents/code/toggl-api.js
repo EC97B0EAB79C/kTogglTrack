@@ -1,30 +1,30 @@
-function getCurrentTimeEntry(callback) {
+function getRecentTimeEntry(callback) {
     var result = {
-        time_entry_id: -1,
-        workspace_id: -1,
-        description: "No active task",
+        workspace_id: null,
+        time_entry_id: null,
+        description: "",
+        duration: -1,
+        project_id: null,
         project_name: "",
-        color: "#000000",
+        project_color: "#000000",
         start: -1,
-        duration: -1
+        tag_ids: []
     }
 
     const apiKey = plasmoid.configuration.apiTokenToggl;
-
     if (!apiKey) {
         console.error("API key is not set");
-        result.description = "API key is not set";
+        result.description = null;
         callback(result);
         return;
     }
-
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
-    
+
     var req = new XMLHttpRequest();
-    var url = "https://api.track.toggl.com/api/v9/me/time_entries/current";
+    var url = "https://api.track.toggl.com/api/v9/me/time_entries";
 
     req.open("GET", url, true);
-    
+
     req.setRequestHeader("Content-Type", "application/json");
     req.setRequestHeader("Authorization", auth);
 
@@ -32,33 +32,35 @@ function getCurrentTimeEntry(callback) {
         if (req.readyState === XMLHttpRequest.DONE) {
             try {
                 if (req.status === 200) {
-                    var entry = JSON.parse(req.responseText);
-
-                    if (!entry || !entry.start) {
+                    var entries = JSON.parse(req.responseText);
+                    if (entries.length == 0) {
                         callback(result);
                         return;
                     }
 
-                    var start = new Date(entry.start).getTime();
-                    result.time_entry_id = entry.id;
-                    result.workspace_id = entry.workspace_id;
-                    result.description = entry.description || "";
-                    result.start = start;
-                    result.duration = Math.floor((Date.now() - start) / 1000);
+                    var recent = entries[0];
+                    result.workspace_id = recent.workspace_id;
+                    result.description = recent.description || "";
+                    result.duration = recent.duration;
+                    result.project_id = recent.project_id;
+                    result.tag_ids = recent.tag_ids || [];
 
-
-                    if (entry.project_id) {
-                        getProject(entry.workspace_id, entry.project_id, function(project) {
+                    if (recent.duration < 0){
+                        result.time_entry_id = recent.id;
+                        result.start = new Date(recent.start).getTime();
+                        result.duration = Math.floor((Date.now() - result.start) / 1000);
+                    }
+                    
+                    if (recent.project_id) {
+                        getProject(recent.workspace_id, recent.project_id, function(project) {
                             result.project_name = project?.name || "";
-                            result.color = project?.color || "#000000";
+                            result.project_color = project?.color || "#000000";
                             callback(result);
                         });
-                    }
-                    else {
+                    } else {
                         callback(result);
                     }
                     
-
                 } else {
                     console.error("[HTTP Error]", req.status, req.statusText);
                     callback(null);
@@ -125,6 +127,7 @@ function getProject(workspaceId, projectId, projectCallback) {
     req.send();
 }
 
+
 function stopTimeEntry(time_entry_id, workspace_id, callback){
     const apiKey = plasmoid.configuration.apiTokenToggl;
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
@@ -158,4 +161,48 @@ function stopTimeEntry(time_entry_id, workspace_id, callback){
     };
 
     req.send();
+}
+
+
+function postTimeEntry(recent_time_entry, callback) {
+    const apiKey = plasmoid.configuration.apiTokenToggl;
+    const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
+
+    var req = new XMLHttpRequest();
+    var url = `https://api.track.toggl.com/api/v9/workspaces/${recent_time_entry.workspace_id}/time_entries`;
+
+    req.open("POST", url);
+
+    req.setRequestHeader("Content-Type", "application/json");
+    req.setRequestHeader("Authorization", auth);
+
+    req.onerror = function() {
+        console.error("Request couldn't be sent: " + req.statusText);
+    };
+
+    req.onreadystatechange = function() {
+        if (req.readyState === XMLHttpRequest.DONE) {
+            try {
+                if (req.status === 200) {
+                    getCurrentTimeEntry(callback);
+                } else {
+                    console.error("Post Time Entry Error:", req.status);
+                    callback(null);
+                }
+            } catch(e) {
+                console.error("Post Time Entry Parse Error:", e);
+                callback(null);
+            }
+        }
+    };
+
+    req.send(JSON.stringify({
+        created_with: "kTogglTrack",
+        description: recent_time_entry.description,
+        duration: -1,
+        project_id: recent_time_entry.project_id,
+        start: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+        workspace_id: recent_time_entry.workspace_id,
+        tag_ids: recent_time_entry.tag_ids
+    }));
 }

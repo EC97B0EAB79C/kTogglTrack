@@ -5,19 +5,21 @@ import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents3
- import "../code/toggl-api.js" as TogglAPI
+import "../code/toggl-api.js" as TogglAPI
 
 PlasmoidItem {
     id: root
 
     property var currentTimeEntry: {
-        "time_entry_id": -1,
-        "workspace_id": -1,
+        "workspace_id": null,
+        "time_entry_id": null,
         "description": "No active task",
+        "duration": -1,
+        "project_id": null,
         "project_name": "",
-        "color": "#000000",
+        "project_color": "#000000",
         "start": -1,
-        "duration": -1
+        "tag_ids": []
     }
 
     property int triggerCount: 0
@@ -37,7 +39,7 @@ PlasmoidItem {
 
     function updateCurrentTimeEntry() {
         printDebug("Getting current time entry");
-        TogglAPI.getCurrentTimeEntry(function(entry) {
+        TogglAPI.getRecentTimeEntry(function(entry) {
             if (entry) {
                 currentTimeEntry = entry
             } else {
@@ -61,13 +63,16 @@ PlasmoidItem {
         TogglAPI.stopTimeEntry(
             currentTimeEntry["time_entry_id"],
             currentTimeEntry["workspace_id"],
-            function(entry) {
-            if (entry) {
-                currentTimeEntry = entry
-            } else {
-                
-            }
-        });
+            function(entry) { if(entry) { currentTimeEntry = entry } }
+        );
+    }
+
+    function postTimeEntry() {
+        printDebug("Posting time entry");
+        TogglAPI.postTimeEntry(
+            currentTimeEntry,
+            function(entry) { if(entry) { currentTimeEntry = entry } }
+        );
     }
 
     Component.onCompleted: {
@@ -101,10 +106,21 @@ PlasmoidItem {
         }
 
         PlasmaComponents3.Label {
-            text: currentTimeEntry["description"]
+            text: {
+                if (currentTimeEntry["time_entry_id"] !== null){
+                    currentTimeEntry["description"]
+                } else {
+                    if (currentTimeEntry["description"] === null) {
+                        "API Token is not set"
+                    }
+                    else {
+                        "No Active Task"
+                    }
+                }
+            }
+            
             elide: Text.ElideRight
             Layout.maximumWidth: 150
-            visible: currentTimeEntry["description"] !== ""
         }
 
         RowLayout {
@@ -112,20 +128,20 @@ PlasmoidItem {
                 width: 10
                 height: 10
                 radius: 5
-                color: currentTimeEntry["color"]
+                color: currentTimeEntry["project_color"]
             }
 
             PlasmaComponents3.Label {
                 text: currentTimeEntry["project_name"]
-                color: currentTimeEntry["color"]
+                color: currentTimeEntry["project_color"]
             }
 
-            visible: currentTimeEntry["project_name"] !== ""
+            visible: currentTimeEntry["time_entry_id"] !== null
         }
 
         PlasmaComponents3.Label {
             text: formatDuration(currentTimeEntry["duration"])
-            visible: currentTimeEntry["duration"] > 0
+            visible: currentTimeEntry["time_entry_id"] !== null
         }
     }
     
@@ -137,6 +153,7 @@ PlasmoidItem {
         Layout.maximumWidth: 300
         Layout.minimumWidth: 300
 
+        // Task Details
         RowLayout {
             id: rowLayout
             anchors {
@@ -156,17 +173,19 @@ PlasmoidItem {
                 width: 12
                 height: 12
                 radius: 6
-                color: currentTimeEntry["color"]
-                visible: currentTimeEntry["project_name"] !== ""
+                color: currentTimeEntry["project_color"]
+                visible: currentTimeEntry["project_id"] !== null
             }
 
             PlasmaComponents3.Label {
                 text: currentTimeEntry["project_name"]
-                color: currentTimeEntry["color"]
-                visible: currentTimeEntry["project_name"] !== ""
+                color: currentTimeEntry["project_color"]
+                visible: currentTimeEntry["project_id"] !== null
             }
         }
         
+        // If task active: show duration
+        // If task inactive: show continue text
         PlasmaComponents3.Label {
             id: durationLabel
             anchors {
@@ -174,11 +193,19 @@ PlasmoidItem {
                 bottomMargin: 20
                 horizontalCenter: parent.horizontalCenter
             }
-            text: formatDuration(currentTimeEntry["duration"])
+            text: {
+                if (currentTimeEntry["time_entry_id"] !== null){
+                    formatDuration(currentTimeEntry["duration"])
+                } else {
+                    "Continue task?"
+                }
+            }
             font.family: "monospace"
-            visible: currentTimeEntry["duration"] > 0
+            visible: currentTimeEntry["workspace_id"] !== null
         }
         
+        // If task active: show duration
+        // If task inactive: show continue text
         PlasmaComponents3.Button {
             id: stopButton
             anchors {
@@ -186,9 +213,22 @@ PlasmoidItem {
                 bottomMargin: 10
                 horizontalCenter: parent.horizontalCenter
             }
-            text: "Stop"
-            visible: currentTimeEntry["duration"] > 0
-            onClicked: stopTimeEntry()
+            text: {
+                if (currentTimeEntry["time_entry_id"] !== null){
+                    "Stop"
+                } else {
+                    "Continue"
+                }
+            }
+            onClicked: {
+                if (currentTimeEntry["time_entry_id"] !== null){
+                    stopTimeEntry()
+                } else {
+                    postTimeEntry()
+                }
+            }
+            visible: currentTimeEntry["workspace_id"] !== null
         }
+
     }
 }
