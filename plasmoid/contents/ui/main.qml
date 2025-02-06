@@ -121,6 +121,7 @@ PlasmoidItem {
             
             elide: Text.ElideRight
             Layout.maximumWidth: 150
+            visible: (currentTimeEntry["time_entry_id"] === null) | (currentTimeEntry["description"] !== "")
         }
 
         RowLayout {
