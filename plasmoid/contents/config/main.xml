@@ -8,7 +8,7 @@
             <default></default>
         </entry>
         <entry name="refreshPeriod" type="Int">
-            <default>5</default>
+            <default>120</default>
         </entry>
     </group>
 </config>

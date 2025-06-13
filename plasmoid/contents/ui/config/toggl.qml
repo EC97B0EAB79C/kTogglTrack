@@ -30,7 +30,7 @@ KCM.SimpleKCM {
             id: refreshPeriod
 
             from: 1
-            to: 60
+            to: 600
             editable: true
 
             validator: IntValidator {
