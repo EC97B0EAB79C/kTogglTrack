@@ -24,6 +24,7 @@ PlasmoidItem {
 
     property int triggerCount: 0
 
+    // ---- Helpers -----------------------------------------------------------
     function printDebug(msg) {
         if (plasmoid.configuration.logConsole) {
             console.log("[debug] [main.qml] " + msg);
@@ -37,6 +38,7 @@ PlasmoidItem {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
+    // ---- Toggl API Calls ---------------------------------------------------
     function updateCurrentTimeEntry() {
         printDebug("Getting current time entry");
         TogglAPI.getRecentTimeEntry(function(entry) {
@@ -75,10 +77,7 @@ PlasmoidItem {
         );
     }
 
-    Component.onCompleted: {
-        updateCurrentTimeEntry();
-    }
-
+    // ---- Timer -------------------------------------------------------------
     Timer {
         interval: 250
         running: true
@@ -96,6 +95,12 @@ PlasmoidItem {
         }
     }
 
+    Component.onCompleted: {
+        updateCurrentTimeEntry();
+    }
+
+    // ---- Layouts -----------------------------------------------------------
+    // Compact Representation
     compactRepresentation: RowLayout {
         id: rowLayout
         spacing: 5
@@ -146,7 +151,7 @@ PlasmoidItem {
         }
     }
     
-
+    // Full Representation
     fullRepresentation: ColumnLayout {
         spacing: 10
         Layout.maximumHeight: 130
