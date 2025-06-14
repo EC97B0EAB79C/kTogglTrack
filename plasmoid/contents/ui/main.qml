@@ -85,7 +85,7 @@ PlasmoidItem {
         repeat: true
         onTriggered: {
             
-            if (triggerCount % (plasmoid.configuration.refreshPeriod * 4) === 0) {
+            if (!plasmoid.configuration.lowAPIUsage && (triggerCount % (plasmoid.configuration.refreshPeriod * 4)) === 0) {
                 updateCurrentTimeEntry();
                 triggerCount = 0;
             }

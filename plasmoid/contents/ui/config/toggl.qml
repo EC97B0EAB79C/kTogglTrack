@@ -11,6 +11,7 @@ KCM.SimpleKCM {
 
     property alias cfg_apiTokenToggl: apiTokenToggl.text
     property alias cfg_refreshPeriod: refreshPeriod.value
+    property alias cfg_lowAPIUsage: lowAPIUsage.checked
 
     Kirigami.FormLayout {
         anchors.fill: parent
