@@ -7,6 +7,9 @@
         <entry name="apiTokenToggl" type="String">
             <default></default>
         </entry>
+        <entry name="lowAPIUsage" type="Bool">
+            <default>true</default>
+        </entry>
         <entry name="refreshPeriod" type="Int">
             <default>120</default>
         </entry>
