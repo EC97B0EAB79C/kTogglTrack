@@ -21,6 +21,7 @@ PlasmoidItem {
         "start": -1,
         "tag_ids": []
     }
+    property bool apiKeyValid: false
 
     property int triggerCount: 0
 
@@ -39,6 +40,12 @@ PlasmoidItem {
     }
 
     // ---- Toggl API Calls ---------------------------------------------------
+    function validateApiKey() {
+        TogglAPI.validateApiKey(function(isValid) {
+            apiKeyValid = isValid;
+        });
+    }
+
     function updateCurrentTimeEntry() {
         printDebug("Getting current time entry");
         TogglAPI.getRecentTimeEntry(function(entry) {
@@ -96,7 +103,7 @@ PlasmoidItem {
     }
 
     Component.onCompleted: {
-        updateCurrentTimeEntry();
+        validateApiKey(); 
     }
 
     // ---- Layouts -----------------------------------------------------------
@@ -112,15 +119,16 @@ PlasmoidItem {
 
         PlasmaComponents3.Label {
             text: {
-                if (currentTimeEntry["time_entry_id"] !== null){
+                if (plasmoid.configuration.apiTokenToggl === null || plasmoid.configuration.apiTokenToggl === "") {
+                    "API Token is not set"
+                } else if (!apiKeyValid) {
+                    "API Token is invalid"
+                } else if (plasmoid.configuration.lowAPIUsage) {
+                    "-------"
+                } else if (currentTimeEntry["time_entry_id"] !== null) {
                     currentTimeEntry["description"]
                 } else {
-                    if (currentTimeEntry["description"] === null) {
-                        "API Token is not set"
-                    }
-                    else {
-                        "No Active Task"
-                    }
+                    "No Active Task"
                 }
             }
             
@@ -142,12 +150,12 @@ PlasmoidItem {
                 color: currentTimeEntry["project_color"]
             }
 
-            visible: currentTimeEntry["time_entry_id"] !== null
+            visible: (currentTimeEntry["time_entry_id"] !== null) && (!plasmoid.configuration.lowAPIUsage)
         }
 
         PlasmaComponents3.Label {
             text: formatDuration(currentTimeEntry["duration"])
-            visible: currentTimeEntry["time_entry_id"] !== null
+            visible: (currentTimeEntry["time_entry_id"] !== null) && (!plasmoid.configuration.lowAPIUsage)
         }
     }
     
@@ -169,7 +177,15 @@ PlasmoidItem {
             }
             
             PlasmaComponents3.Label {
-                text: currentTimeEntry["description"]
+                text: {
+                    if (plasmoid.configuration.apiTokenToggl === null || plasmoid.configuration.apiTokenToggl === "") {
+                        "API Token is not set"
+                    } else if (!apiKeyValid) {
+                        "API Token is invalid"
+                    } else{
+                        currentTimeEntry["description"]
+                    }
+                }
                 font.bold: true
                 font.pixelSize: PlasmaCore.Theme.defaultFont.pixelSize * 1.2
                 visible: currentTimeEntry["description"] !== ""
