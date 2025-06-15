@@ -105,11 +105,11 @@ function getRecentTimeEntry(callback) {
 
                 } else {
                     console.error("[HTTP Error]", req.status, req.statusText);
-                    callback(null);
+                    callback(result);
                 }
             } catch (e) {
                 console.error("[Parsing Error]", e.message);
-                callback(null);
+                callback(result);
             }
         }
     };

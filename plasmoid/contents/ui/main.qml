@@ -41,6 +41,11 @@ PlasmoidItem {
 
     // ---- Toggl API Calls ---------------------------------------------------
     function validateApiKey() {
+        if (plasmoid.configuration.apiTokenToggl === null || plasmoid.configuration.apiTokenToggl === "") {
+            apiKeyValid = false;
+            return;
+        }
+
         TogglAPI.validateApiKey(function(isValid) {
             apiKeyValid = isValid;
         });
@@ -90,7 +95,6 @@ PlasmoidItem {
         running: true
         repeat: true
         onTriggered: {
-            
             if (!plasmoid.configuration.lowAPIUsage && (triggerCount % (plasmoid.configuration.refreshPeriod * 4)) === 0) {
                 updateCurrentTimeEntry();
                 triggerCount = 0;
@@ -98,7 +102,17 @@ PlasmoidItem {
             else {
                 updateDuration();
             }
+
             triggerCount++;
+        }
+    }
+
+    // ---- Configuration Changes -----------------------------------
+    Connections {
+        target: plasmoid.configuration
+        
+        function onApiTokenTogglChanged() {
+            validateApiKey();
         }
     }
 
@@ -166,6 +180,10 @@ PlasmoidItem {
         Layout.minimumHeight: 130
         Layout.maximumWidth: 300
         Layout.minimumWidth: 300
+
+        Component.onCompleted: {
+            updateCurrentTimeEntry();
+        }
 
         // Task Details
         RowLayout {
