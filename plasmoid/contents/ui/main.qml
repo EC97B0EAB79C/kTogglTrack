@@ -113,6 +113,9 @@ PlasmoidItem {
         
         function onApiTokenTogglChanged() {
             validateApiKey();
+            if (apiKeyValid) {
+                updateCurrentTimeEntry();
+            }
         }
     }
 
@@ -128,7 +131,10 @@ PlasmoidItem {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: root.expanded = !root.expanded
+            onClicked: {
+                root.expanded = !root.expanded
+                updateCurrentTimeEntry()
+            }
         }
 
         PlasmaComponents3.Label {
@@ -137,8 +143,6 @@ PlasmoidItem {
                     "API Token is not set"
                 } else if (!apiKeyValid) {
                     "API Token is invalid"
-                } else if (plasmoid.configuration.lowAPIUsage) {
-                    "-------"
                 } else if (currentTimeEntry["time_entry_id"] !== null) {
                     currentTimeEntry["description"]
                 } else {
