@@ -11,6 +11,7 @@ KCM.SimpleKCM {
 
     property alias cfg_apiTokenToggl: apiTokenToggl.text
     property alias cfg_refreshPeriod: refreshPeriod.value
+    property alias cfg_lowAPIUsage: lowAPIUsage.checked
 
     Kirigami.FormLayout {
         anchors.fill: parent
@@ -26,12 +27,19 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("API Token:")
         }
 
+        QQC.CheckBox {
+            id: lowAPIUsage
+            
+            Kirigami.FormData.label: i18n("Low API usage mode:")
+        }
+
         QQC.SpinBox {
             id: refreshPeriod
 
             from: 1
-            to: 60
+            to: 600
             editable: true
+            enabled: !lowAPIUsage.checked
 
             validator: IntValidator {
                 bottom: refreshPeriod.from

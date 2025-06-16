@@ -1,3 +1,45 @@
+function validateApiKey(callback) {
+    var result = false;
+
+    const apiKey = plasmoid.configuration.apiTokenToggl;
+    if (!apiKey) {
+        console.error("API key is not set");
+        callback(result);
+        return;
+    }
+    const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
+
+    var req = new XMLHttpRequest();
+    var url = "https://api.track.toggl.com/api/v9/me";
+
+    req.open("GET", url, true);
+    req.setRequestHeader("Content-Type", "application/json");
+    req.setRequestHeader("Authorization", auth);
+
+    req.onreadystatechange = function () {
+        if (req.readyState === XMLHttpRequest.DONE) {
+            try {
+                if (req.status === 200) {
+                    result = true;
+                } else {
+                    console.error("[HTTP Error]", req.status, req.statusText);
+                }
+            } catch (e) {
+                console.error("[Parsing Error]", e.message);
+            }
+            callback(result);
+        }
+    };
+
+    req.onerror = function () {
+        console.error("[Network Error] Request failed");
+        callback(result);
+    };
+
+    req.send();
+}
+
+
 function getRecentTimeEntry(callback) {
     var result = {
         workspace_id: null,
@@ -28,7 +70,7 @@ function getRecentTimeEntry(callback) {
     req.setRequestHeader("Content-Type", "application/json");
     req.setRequestHeader("Authorization", auth);
 
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === XMLHttpRequest.DONE) {
             try {
                 if (req.status === 200) {
@@ -45,14 +87,14 @@ function getRecentTimeEntry(callback) {
                     result.project_id = recent.project_id;
                     result.tag_ids = recent.tag_ids || [];
 
-                    if (recent.duration < 0){
+                    if (recent.duration < 0) {
                         result.time_entry_id = recent.id;
                         result.start = new Date(recent.start).getTime();
                         result.duration = Math.floor((Date.now() - result.start) / 1000);
                     }
-                    
+
                     if (recent.project_id) {
-                        getProject(recent.workspace_id, recent.project_id, function(project) {
+                        getProject(recent.workspace_id, recent.project_id, function (project) {
                             result.project_name = project?.name || "";
                             result.project_color = project?.color || "#000000";
                             callback(result);
@@ -60,19 +102,19 @@ function getRecentTimeEntry(callback) {
                     } else {
                         callback(result);
                     }
-                    
+
                 } else {
                     console.error("[HTTP Error]", req.status, req.statusText);
-                    callback(null);
+                    callback(result);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("[Parsing Error]", e.message);
-                callback(null);
+                callback(result);
             }
         }
     };
 
-    req.onerror = function() {
+    req.onerror = function () {
         console.error("[Network Error] Request failed");
         callback(null);
     };
@@ -91,20 +133,20 @@ function getProject(workspaceId, projectId, projectCallback) {
     }
 
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
-    
+
     var req = new XMLHttpRequest();
     var url = `https://api.track.toggl.com/api/v9/workspaces/${workspaceId}/projects/${projectId}`;
 
     req.open("GET", url);
-    
+
     req.setRequestHeader("Content-Type", "application/json");
     req.setRequestHeader("Authorization", auth);
 
-    req.onerror = function() {
+    req.onerror = function () {
         console.error("Request couldn't be sent: " + req.statusText);
     };
 
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === XMLHttpRequest.DONE) {
             try {
                 if (req.status === 200) {
@@ -117,7 +159,7 @@ function getProject(workspaceId, projectId, projectCallback) {
                     console.error("Project Fetch Error:", req.status);
                     projectCallback(null);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Project Parse Error:", e);
                 projectCallback(null);
             }
@@ -128,7 +170,7 @@ function getProject(workspaceId, projectId, projectCallback) {
 }
 
 
-function stopTimeEntry(time_entry_id, workspace_id, callback){
+function stopTimeEntry(time_entry_id, workspace_id, callback) {
     const apiKey = plasmoid.configuration.apiTokenToggl;
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
 
@@ -140,11 +182,11 @@ function stopTimeEntry(time_entry_id, workspace_id, callback){
     req.setRequestHeader("Content-Type", "application/json");
     req.setRequestHeader("Authorization", auth);
 
-    req.onerror = function() {
+    req.onerror = function () {
         console.error("Request couldn't be sent: " + req.statusText);
     };
 
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === XMLHttpRequest.DONE) {
             try {
                 if (req.status === 200) {
@@ -153,7 +195,7 @@ function stopTimeEntry(time_entry_id, workspace_id, callback){
                     console.error("Stop Time Entry Error:", req.status);
                     callback(null);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Stop Time Entry Parse Error:", e);
                 callback(null);
             }
@@ -176,11 +218,11 @@ function postTimeEntry(recent_time_entry, callback) {
     req.setRequestHeader("Content-Type", "application/json");
     req.setRequestHeader("Authorization", auth);
 
-    req.onerror = function() {
+    req.onerror = function () {
         console.error("Request couldn't be sent: " + req.statusText);
     };
 
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === XMLHttpRequest.DONE) {
             try {
                 if (req.status === 200) {
@@ -189,7 +231,7 @@ function postTimeEntry(recent_time_entry, callback) {
                     console.error("Post Time Entry Error:", req.status);
                     callback(null);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Post Time Entry Parse Error:", e);
                 callback(null);
             }
