@@ -11,6 +11,7 @@ PlasmoidItem {
     id: root
 
     property var currentTimeEntry: {
+        "valid": false,
         "workspace_id": null,
         "time_entry_id": null,
         "description": "No active task",
@@ -56,6 +57,7 @@ PlasmoidItem {
         TogglAPI.getRecentTimeEntry(function(entry) {
             if (entry) {
                 currentTimeEntry = entry
+                apiKeyValid = true;
             } else {
                 
             }
@@ -100,10 +102,6 @@ PlasmoidItem {
                 triggerCount = 0;
             } else {
                 updateDuration();
-            }
-
-            if (!apiKeyValid && (triggerCount % (4 * 60)) === 0) {
-                validateApiKey();
             }
 
             triggerCount++;
@@ -274,7 +272,7 @@ PlasmoidItem {
                     postTimeEntry()
                 }
             }
-            visible: currentTimeEntry["workspace_id"] !== null
+            visible: currentTimeEntry["valid"] !== null
         }
 
     }

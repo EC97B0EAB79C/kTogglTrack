@@ -4,7 +4,7 @@
     "KPlugin": {
         "Id": "com.github.ec97b0eab79c.ktoggltrack",
         "Name": "kTogglTrack",
-        "Version": "0.6.0",
+        "Version": "0.6.1",
         "Description": "A simple Toggl Track client for KDE Plasma",
         "Icon": "preferences-system-time",
         "Category": "Date and Time"

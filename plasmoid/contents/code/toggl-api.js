@@ -42,6 +42,7 @@ function validateApiKey(callback) {
 
 function getRecentTimeEntry(callback) {
     var result = {
+        valid: false,
         workspace_id: null,
         time_entry_id: null,
         description: "",
@@ -56,8 +57,7 @@ function getRecentTimeEntry(callback) {
     const apiKey = plasmoid.configuration.apiTokenToggl;
     if (!apiKey) {
         console.error("API key is not set");
-        result.description = null;
-        callback(result);
+        callback(null);
         return;
     }
     const auth = "Basic " + Qt.btoa(`${apiKey}:api_token`);
@@ -76,11 +76,12 @@ function getRecentTimeEntry(callback) {
                 if (req.status === 200) {
                     var entries = JSON.parse(req.responseText);
                     if (entries.length == 0) {
-                        callback(result);
+                        callback(null);
                         return;
                     }
 
                     var recent = entries[0];
+                    result.valid = true;
                     result.workspace_id = recent.workspace_id;
                     result.description = recent.description || "";
                     result.duration = recent.duration;
@@ -105,11 +106,11 @@ function getRecentTimeEntry(callback) {
 
                 } else {
                     console.error("[HTTP Error]", req.status, req.statusText);
-                    callback(result);
+                    callback(null);
                 }
             } catch (e) {
                 console.error("[Parsing Error]", e.message);
-                callback(result);
+                callback(null);
             }
         }
     };
