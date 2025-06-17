@@ -98,9 +98,12 @@ PlasmoidItem {
             if (!plasmoid.configuration.lowAPIUsage && (triggerCount % (plasmoid.configuration.refreshPeriod * 4)) === 0) {
                 updateCurrentTimeEntry();
                 triggerCount = 0;
-            }
-            else {
+            } else {
                 updateDuration();
+            }
+
+            if (!apiKeyValid && (triggerCount % (4 * 60)) === 0) {
+                validateApiKey();
             }
 
             triggerCount++;
